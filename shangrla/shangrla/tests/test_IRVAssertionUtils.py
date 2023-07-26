@@ -1,3 +1,4 @@
+import json
 import typing
 import sys
 import pytest
@@ -13,11 +14,13 @@ from shangrla.Audit import Audit, Assertion, Assorter, Contest, CVR, Stratum
 from shangrla.NonnegMean import NonnegMean
 from shangrla.Dominion import Dominion
 from shangrla.Hart import Hart
-from shangrla.IRVAssertionUtils import NEN, NEB
+from shangrla.IRVAssertionUtils import NEN, NEB, parseAuditFileIntoAuditsArray, \
+    parseAssertionsAndApparentWinnersAndLosers, parseAssertionsIntoDict
+
 
 #######################################################################################################
 
-class TestAudit:
+class TestIRVAssertionUtils:
 
     def test_from_assertions(self):
         candidate_set = {'45','15','16','17','18'}
@@ -72,6 +75,28 @@ class TestAudit:
 
         ##TODO - think about bad input, e.g. when already_eliminated is not a subset of candidate_set, or the winners
         # and losers are not in the candidates set, and decide what to do about it.
+
+    def test_RCV_RAIRE_json_data_parsing(self):
+        # An example assertion-only file used by RAIRE.
+        a_file = open("../../Examples/Data/SF2019Nov8Assertions.json")
+        # An example log file output by the SHANGRLA audit process
+        # a_file = open("Data/log.json")
+        auditfile = json.load(a_file)
+
+        c_file = open("../../Examples/Data/CandidateManifest.json")
+        candidatefile = json.load(c_file)
+
+        IsRLALogFile: bool
+        (auditsArray, IsRLALogFile) = parseAuditFileIntoAuditsArray(auditfile, candidatefile)
+        assert IsRLALogFile == False
+        assert len(auditsArray) == 1
+
+        (assertions,apparentWinner,apparentNonWinners) = parseAssertionsAndApparentWinnersAndLosers(auditsArray[0], candidatefile, IsRLALogFile)
+        assert apparentWinner == "SUZY LOFTUS"
+        assert apparentNonWinners == [('45', 'Write-in'), ('16', 'LEIF DAUTCH'), ('17', 'NANCY TUNG'), ('18', 'CHESA BOUDIN')]
+
+        assertionDict = parseAssertionsIntoDict(auditsArray[0],IsRLALogFile)
+        print(assertionDict)
 
     def test_rcv_assorter(self):
         import json

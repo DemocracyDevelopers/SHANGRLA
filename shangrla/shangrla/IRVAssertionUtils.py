@@ -151,9 +151,10 @@ def parseAssertionsIntoDict(audit,IsRLALogfile):
     for a in assertions:
         if a["assertion_type"] == "IRV_ELIMINATION":
             elim = [e for e in a['already_eliminated']]
-            new_assertion = NEN(a['winner'], loser, elim, cands)
+            cands = {c for c in audit['eliminated']}
+            new_assertion = NEN(a['winner'],a['loser'], elim, cands)
         else:
-            new_assertion = NEB(winner, loser)
+            new_assertion = NEB(a['winner'],a['loser'])
 
         if IsRLALogfile:
         # We need to recreate the tags used by the assertion-RLA notebook to identify IRV
@@ -180,13 +181,14 @@ def parseAssertionsIntoDict(audit,IsRLALogfile):
             else:
                 new_assertion.proved = False
 
-        if a.winner in assertionDict:
+        if new_assertion.winner in assertionDict:
         # We already have this winner - add to the set of situations where they win
-            assertionDict[a.winner].add(a)
+            assertionDict[new_assertion.winner].append(new_assertion)
         else:
         # Add a new value for this winner in the dictionary, with singleton set for this assertion
-            assertionDict[a.winner] = {a}
-    # assertionDict = parse_assertions(assertions)
+            singletonAssertionSet = [a]
+            assertionDict[new_assertion.winner] = singletonAssertionSet
+        # assertionDict = parse_assertions(assertions)
 
     return assertionDict
 
