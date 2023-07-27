@@ -15,7 +15,7 @@ from shangrla.NonnegMean import NonnegMean
 from shangrla.Dominion import Dominion
 from shangrla.Hart import Hart
 from shangrla.IRVAssertionUtils import NEN, NEB, parseAuditFileIntoAuditsArray, \
-    parseAssertionsAndApparentWinnersAndLosers, parseAssertionsIntoDict
+    parseAssertionsIntoAssertionList, parseApparentWinnersAndLosers
 
 
 #######################################################################################################
@@ -87,16 +87,21 @@ class TestIRVAssertionUtils:
         candidatefile = json.load(c_file)
 
         IsRLALogFile: bool
-        (auditsArray, IsRLALogFile) = parseAuditFileIntoAuditsArray(auditfile, candidatefile)
+        (auditsArray, IsRLALogFile) = parseAuditFileIntoAuditsArray(auditfile)
         assert IsRLALogFile == False
         assert len(auditsArray) == 1
 
-        (assertions,apparentWinner,apparentNonWinners) = parseAssertionsAndApparentWinnersAndLosers(auditsArray[0], candidatefile, IsRLALogFile)
+        (apparentWinnerID, apparentWinner, apparentNonWinnerIDs, apparentNonWinners, candidatelist) \
+            = parseApparentWinnersAndLosers(auditsArray[0], candidatefile, IsRLALogFile)
         assert apparentWinner == "SUZY LOFTUS"
         assert apparentNonWinners == [('45', 'Write-in'), ('16', 'LEIF DAUTCH'), ('17', 'NANCY TUNG'), ('18', 'CHESA BOUDIN')]
 
-        assertionDict = parseAssertionsIntoDict(auditsArray[0],IsRLALogFile)
-        print(assertionDict)
+        #assertionDict = parseAssertionsIntoDict(auditsArray[0],IsRLALogFile)
+        (NENList, NEBList) = parseAssertionsIntoAssertionList(auditsArray[0],IsRLALogFile)
+        #NEBArray = storeNEBAssertionsInArray(NEBList, candidates)
+        #NENDict = storeNENAssertionListInDict(NENList)
+        print(NENList)
+        print(NEBList)
 
     def test_rcv_assorter(self):
         import json
