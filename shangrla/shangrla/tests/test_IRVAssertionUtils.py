@@ -15,7 +15,7 @@ from shangrla.NonnegMean import NonnegMean
 from shangrla.Dominion import Dominion
 from shangrla.Hart import Hart
 from shangrla.IRVAssertionUtils import NEN, NEB, parseAuditFileIntoAuditsArray, \
-    parseAssertionsIntoAssertionList, parseApparentWinnersAndLosers
+    parseAssertionsIntoAssertionList, parseApparentWinnersAndLosers, storeNEBAssertionsInArray, storeNENAssertionsInDict
 
 
 #######################################################################################################
@@ -91,18 +91,37 @@ class TestIRVAssertionUtils:
         assert IsRLALogFile == False
         assert len(auditsArray) == 1
 
-        (apparentWinnerID, apparentWinner, apparentNonWinnerIDs, apparentNonWinners, candidatelist) \
+        (apparentWinnerID, apparentWinner, apparentNonWinnerIDs, apparentNonWinners, candidateList) \
             = parseApparentWinnersAndLosers(auditsArray[0], candidatefile, IsRLALogFile)
         assert apparentWinner == "SUZY LOFTUS"
         assert apparentNonWinners == [('45', 'Write-in'), ('16', 'LEIF DAUTCH'), ('17', 'NANCY TUNG'), ('18', 'CHESA BOUDIN')]
 
         #assertionDict = parseAssertionsIntoDict(auditsArray[0],IsRLALogFile)
         (NENList, NEBList) = parseAssertionsIntoAssertionList(auditsArray[0],IsRLALogFile)
-        #NEBArray = storeNEBAssertionsInArray(NEBList, candidates)
-        #NENDict = storeNENAssertionListInDict(NENList)
+        NEBArray = storeNEBAssertionsInArray(NEBList, candidateList)
+        NENDict = storeNENAssertionsInDict(NENList)
+        print(NENList)
+        print(NEBList)
+        print(NEBArray)
+        print(NENDict)
+
+    simpleTestAudit = {
+        'contest': '339',
+        'winner': '15',
+        'eliminated': ['16', '17'],
+        'Expected Polls (#)': '71',
+        'Expected Polls (%)': '1',
+        'assertions': [
+            {'winner': '15', 'loser': '16', 'already_eliminated': ['17'], 'assertion_type': 'IRV_ELIMINATION', 'explanation': 'Rules out outcomes with tail [... 15 16]'},
+            {'winner': '15', 'loser': '17', 'already_eliminated': ['16'], 'assertion_type': 'IRV_ELIMINATION', 'explanation': 'Rules out outcomes with tail [... 15 17]'},
+            {'winner': '15', 'loser': '17', 'already_eliminated': [], 'assertion_type': 'IRV_ELIMINATION', 'explanation': 'Rules out outcomes with tail [... 15 x x]'}
+            ]}
+    def test_parseAssertionsIntoAssertionList(self):
+        (NENList, NEBList) = parseAssertionsIntoAssertionList(self.simpleTestAudit, False)
         print(NENList)
         print(NEBList)
 
+### FIXME - just copied from other tests. Can probably delete.
     def test_rcv_assorter(self):
         import json
         with open('./Data/334_361_vbm.json') as fid:

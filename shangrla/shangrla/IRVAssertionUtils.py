@@ -13,7 +13,7 @@ from shangrla.IRVVisualisationUtils import printTuple, findCandidateName, findLi
 # A not-eliminated-before assertion, also sometimes called winner-only.
 # Asserts that winner's first preferences are greater than any mentions of loser not preceded by winner.
 class NEB:
-    def __new__(self, winner, loser):
+    def __init__(self, winner, loser):
         # The winner of the assertion
         self.winner = winner
         # The loser of the assertion
@@ -23,13 +23,13 @@ class NEB:
         # Human-readable description of the assertion. Used as an index into the assertions dict in Audit.py
         self.handle = "" + winner + ' v ' + loser + ' '
 
-        return self
+        # return self
 
 # A Not-eliminated-next assertion, also sometimes called an IRV assertion.
 # asserts that winner > loser when elim is the eliminated set, out of a whole candidate list cands.
 # also stores the still-continuing set, which is simply cands - elim.
 class NEN:
-    def __new__(self, winner, loser, elim, cands):
+    def __init__(self, winner, loser, elim, cands):
         # The winner of the assertion
         self.winner = winner
         # The loser of the assertion
@@ -43,7 +43,7 @@ class NEN:
         # set of continuing candidates
         self.continuing = frozenset(cands.difference(elim))
 
-        return self
+        # return self
 
 def validate_and_visualise_assertions(auditfile, candidatefile):
     (auditsArray, IsRLALogFile) = parseAuditFileIntoAuditsArray(auditfile)
@@ -54,7 +54,7 @@ def validate_and_visualise_assertions(auditfile, candidatefile):
 
         (NENList, NEBList) = parseAssertionsIntoAssertionList(audit, IsRLALogFile)
         NEBArray = storeNEBAssertionsInArray(NEBList, candidates)
-        NENDict = storeNENAssertionListInDict(NENList)
+        NENDict = storeNENAssertionsInDict(NENList)
         valid = validate_assertion_set(NEBArray, NENDict, apparentNonWinners, apparentWinner)
         print('That set of assertions does ')
         if not valid:
@@ -214,7 +214,7 @@ def parseAssertionsIntoAssertionList(audit,IsRLALogfile):
 # 1. NEN/IRV assertions are stored in a hashtable, with the 'still standing' set as the key.
 # 2. NEB/WO assertions are stored in an n*n array for instant lookup:
 # NEBArray(w,l) = True if we have the assertion NEB(w,l). Otherwise false.
-def storeNENAssertionListInDict(NENAssertionList):
+def storeNENAssertionsInDict(NENAssertionList):
 
     assertionDict = {}
 
