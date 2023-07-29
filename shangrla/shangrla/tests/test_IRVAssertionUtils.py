@@ -8,6 +8,7 @@ from collections import OrderedDict, defaultdict
 from cryptorandom.cryptorandom import SHA256, random, int_from_hash
 from cryptorandom.sample import random_permutation
 from cryptorandom.sample import sample_by_index
+from collections import Counter
 
 
 from shangrla.Audit import Audit, Assertion, Assorter, Contest, CVR, Stratum
@@ -116,10 +117,19 @@ class TestIRVAssertionUtils:
             {'winner': '15', 'loser': '17', 'already_eliminated': ['16'], 'assertion_type': 'IRV_ELIMINATION', 'explanation': 'Rules out outcomes with tail [... 15 17]'},
             {'winner': '15', 'loser': '17', 'already_eliminated': [], 'assertion_type': 'IRV_ELIMINATION', 'explanation': 'Rules out outcomes with tail [... 15 x x]'}
             ]}
+
+    cands = frozenset(simpleTestAudit["eliminated"] + [simpleTestAudit["winner"]])
+    ExpectedNENList = [NEN('15', '16', ['17'], cands), NEN('15', '17', ['16'], cands), NEN('15', '17', [], cands)]
     def test_parseAssertionsIntoAssertionList(self):
-        (NENList, NEBList) = parseAssertionsIntoAssertionList(self.simpleTestAudit, False)
-        print(NENList)
-        print(NEBList)
+        audit = self.simpleTestAudit
+        (NENList, NEBList) = parseAssertionsIntoAssertionList(audit, False, self.cands)
+        assert NEBList == []
+
+        # The lists don't actually need to be in the same order for the output to be correct.
+        # Nevertheless, the way its implemented does produce the same order, and I can't
+        # get a set-equality sort of operator to work.
+        assert NENList == self.ExpectedNENList
+
 
 ### FIXME - just copied from other tests. Can probably delete.
     def test_rcv_assorter(self):

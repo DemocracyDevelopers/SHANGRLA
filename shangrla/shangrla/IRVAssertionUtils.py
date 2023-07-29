@@ -6,7 +6,8 @@ from colorama import Fore, Style
 import functools
 import warnings
 from warnings import warn
-from collections import namedtuple
+from collections import namedtuple, Counter
+from dataclasses import dataclass
 
 from shangrla.IRVVisualisationUtils import printTuple, findCandidateName, findListCandidateNames
 
@@ -23,7 +24,8 @@ class NEB:
         # Human-readable description of the assertion. Used as an index into the assertions dict in Audit.py
         self.handle = "" + winner + ' v ' + loser + ' '
 
-        # return self
+    def __eq__(self,other):
+        return self.winner == other.winner and self.loser == other.loser
 
 # A Not-eliminated-next assertion, also sometimes called an IRV assertion.
 # asserts that winner > loser when elim is the eliminated set, out of a whole candidate list cands.
@@ -43,7 +45,12 @@ class NEN:
         # set of continuing candidates
         self.continuing = frozenset(cands.difference(elim))
 
-        # return self
+
+    def __eq__(self,other):
+        return self.winner == other.winner \
+            and self.loser == other.loser \
+            and Counter(self.elim) == Counter(other.elim) \
+            and self.continuing == other.continuing
 
 def validate_and_visualise_assertions(auditfile, candidatefile):
     (auditsArray, IsRLALogFile) = parseAuditFileIntoAuditsArray(auditfile)
@@ -52,7 +59,7 @@ def validate_and_visualise_assertions(auditfile, candidatefile):
             = parseApparentWinnersAndLosers(audit, candidatefile, IsRLALogFile)
         printApparentWinnersAndLosers(apparentWinner, apparentNonWinners)
 
-        (NENList, NEBList) = parseAssertionsIntoAssertionList(audit, IsRLALogFile)
+        (NENList, NEBList) = parseAssertionsIntoAssertionList(audit, IsRLALogFile, candidates)
         NEBArray = storeNEBAssertionsInArray(NEBList, candidates)
         NENDict = storeNENAssertionsInDict(NENList)
         valid = validate_assertion_set(NEBArray, NENDict, apparentNonWinners, apparentWinner)
@@ -126,10 +133,12 @@ def parseApparentWinnersAndLosers(audit,candidatefile,IsRLALogFile):
     if(IsRLALogFile):
         apparentWinner = audit["reported_winners"][0]
         print("apparentWinner = " + apparentWinner)
-        print("candidates = " + str(audit["candidates"]))
+
+        # SHANGRLA log files list all candidates including the winner
+        candidateList = audit["candidates"]
+        print("candidates = " + candidateList)
 
         #FIXME apparentWInnerIDs aren't defined...
-        candidateList = audit["candidates"]
         apparentNonWinners = candidateList.copy()
         apparentNonWinners.remove(apparentWinner)
         # apparentNonWinners = audit["candidates"].remove(apparentWinner)
@@ -140,8 +149,7 @@ def parseApparentWinnersAndLosers(audit,candidatefile,IsRLALogFile):
         # Assume this is formatted like the assertions output from RAIRE
         apparentWinnerID = audit["winner"]
         apparentNonWinnersIDs = audit["eliminated"]
-        candidateList = apparentNonWinnersIDs.copy()
-        candidateList.append(apparentWinnerID)
+        candidateList = apparentNonWinnersIDs + apparentWinnerID
 
         apparentWinner = findCandidateName(apparentWinnerID, candidatefile)
 
@@ -162,7 +170,7 @@ def printApparentWinnersAndLosers(apparentWinner, apparentNonWinners):
 # Parses an audit record, which is either RAIRE assertions or a SHANGRLA audit log,
 # and returns a pair of lists: one with the NEB/WO assertions,
 # the other with the NEN/IRV assertions.
-def parseAssertionsIntoAssertionList(audit,IsRLALogfile):
+def parseAssertionsIntoAssertionList(audit,IsRLALogfile, cands):
     NEBAssertionList = []
     NENAssertionList = []
 
@@ -176,7 +184,6 @@ def parseAssertionsIntoAssertionList(audit,IsRLALogfile):
     for a in assertions:
         if a["assertion_type"] == "IRV_ELIMINATION":
             elim = [e for e in a['already_eliminated']]
-            cands = {c for c in audit['eliminated']}
             new_assertion = NEN(a['winner'],a['loser'], elim, cands)
             NENAssertionList.append(new_assertion)
         else:
