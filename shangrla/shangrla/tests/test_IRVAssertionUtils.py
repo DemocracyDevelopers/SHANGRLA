@@ -130,6 +130,49 @@ class TestIRVAssertionUtils:
         # get a set-equality sort of operator to work.
         assert NENList == self.ExpectedNENList
 
+    def test_storeNENAssertionsInDict(self):
+        assertionDict = storeNENAssertionsInDict(self.ExpectedNENList)
+
+        assert frozenset({'16', '15'}) in assertionDict
+        assert frozenset({'15', '16'}) in assertionDict
+        assert frozenset({'17', '15'}) in assertionDict
+        assert frozenset({'15', '17'}) in assertionDict
+        assert frozenset({'17', '16', '15'}) in assertionDict
+        assert frozenset({'17', '15', '16'}) in assertionDict
+        assert frozenset({'16', '17', '15'}) in assertionDict
+        assert frozenset({'15', '17', '16'}) in assertionDict
+        assert frozenset({'16', '15', '17'}) in assertionDict
+        assert frozenset({'15', '16', '17'}) in assertionDict
+
+        assert assertionDict[frozenset({'16', '15'})] == [NEN('15', '16', ['17'], self.cands)]
+        assert assertionDict[frozenset({'17', '15'})] == [NEN('15', '17', ['16'], self.cands)]
+        assert assertionDict[frozenset({'16', '17', '15'})] == [NEN('15', '17', [], self.cands)]
+
+        assert len(assertionDict.keys()) == 3
+
+    # This says that 17 has to be eliminated first, and then 15 wins when 17 is eliminated.
+    ExpectedNENList2 = [NEN('15', '16', ['17'], cands), NEN('16', '17', [], cands), NEN('15', '17', [], cands)]
+
+    # Tests the appending to lists when multiple NEN assertions have the same still-standing set.
+    def test2_storeNENAssertionsInDict(self):
+        assertionDict = storeNENAssertionsInDict(self.ExpectedNENList2)
+
+        assert frozenset({'15', '16'}) in assertionDict
+        assert frozenset({'16', '15'}) in assertionDict
+        assert frozenset({'17', '16', '15'}) in assertionDict
+        assert frozenset({'17', '15', '16'}) in assertionDict
+        assert frozenset({'16', '17', '15'}) in assertionDict
+        assert frozenset({'15', '17', '16'}) in assertionDict
+        assert frozenset({'16', '15', '17'}) in assertionDict
+        assert frozenset({'15', '16', '17'}) in assertionDict
+
+        assert assertionDict[frozenset({'16', '15'})] == [NEN('15', '16', ['17'], self.cands)]
+
+        # The order really isn't necessary, but they're not sortable.
+        assert assertionDict[frozenset({'16', '17', '15'})] == [NEN('16', '17', [], self.cands), NEN('15', '17', [], self.cands)]
+
+        assert len(assertionDict.keys()) == 2
+
     simpleNEBTestAudit = {
         'contest': '33',
         'winner': '9',
@@ -161,8 +204,6 @@ class TestIRVAssertionUtils:
 
         assert NEBList == self.ExpectedNEBList
         assert NENList == []
-
-
 
     def test_storeNEBAssertionsInArray(self):
         NEBArray = storeNEBAssertionsInArray(self.ExpectedNEBList, self.NEBTestCands)
