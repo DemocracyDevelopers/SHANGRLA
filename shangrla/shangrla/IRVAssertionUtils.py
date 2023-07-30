@@ -55,12 +55,12 @@ class NEN:
 def validate_and_visualise_assertions(auditfile, candidatefile):
     (auditsArray, IsRLALogFile) = parseAuditFileIntoAuditsArray(auditfile)
     for audit in auditsArray:
-        (apparentWinnerID, apparentWinner, apparentNonWinnersIDs, apparentNonWinners, candidates) \
+        (apparentWinnerID, apparentWinner, apparentNonWinnersIDs, apparentNonWinners, sortedCandidates) \
             = parseApparentWinnersAndLosers(audit, candidatefile, IsRLALogFile)
         printApparentWinnersAndLosers(apparentWinner, apparentNonWinners)
 
-        (NENList, NEBList) = parseAssertionsIntoAssertionList(audit, IsRLALogFile, candidates)
-        NEBArray = storeNEBAssertionsInArray(NEBList, candidates)
+        (NENList, NEBList) = parseAssertionsIntoAssertionList(audit, IsRLALogFile, sortedCandidates)
+        NEBArray = storeNEBAssertionsInArray(NEBList, sortedCandidates)
         NENDict = storeNENAssertionsInDict(NENList)
         valid = validate_assertion_set(NEBArray, NENDict, apparentNonWinners, apparentWinner)
         print('That set of assertions does ')
@@ -161,7 +161,8 @@ def parseApparentWinnersAndLosers(audit,candidatefile,IsRLALogFile):
     #    immutableCandidateIDs[i] = candidateList[i]
     # immutableCandidateIDs.flags.writeable = False
 
-    return(apparentWinnerID, apparentWinner, apparentNonWinnersIDs, apparentNonWinners, candidateList)
+    sortedCandidateList = candidateList.sort()
+    return(apparentWinnerID, apparentWinner, apparentNonWinnersIDs, apparentNonWinners, sortedCandidateList)
 
 def printApparentWinnersAndLosers(apparentWinner, apparentNonWinners):
     print("apparent Winner: " + apparentWinner)
@@ -239,13 +240,16 @@ def storeNENAssertionsInDict(NENAssertionList):
 def storeNEBAssertionsInArray(NEBAssertionList, candidates):
 
     n = len(candidates)
+    sortedCandidates = sorted(candidates)
 
     # NEBArray[w][l] is true if we have an assertion NEB(w,l)
-    NEBArray = [[False] * n] * n
+    NEBArray = []
+    for i in range(n):
+        NEBArray.append([False]*n)
 
     for a in NEBAssertionList:
-        wIndex = candidates.index(a.winner)
-        lIndex = candidates.index(a.loser)
+        wIndex = sortedCandidates.index(a.winner)
+        lIndex = sortedCandidates.index(a.loser)
         NEBArray[wIndex][lIndex] = True
 
     return NEBArray

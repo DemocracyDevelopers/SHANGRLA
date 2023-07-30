@@ -120,7 +120,7 @@ class TestIRVAssertionUtils:
 
     cands = frozenset(simpleTestAudit["eliminated"] + [simpleTestAudit["winner"]])
     ExpectedNENList = [NEN('15', '16', ['17'], cands), NEN('15', '17', ['16'], cands), NEN('15', '17', [], cands)]
-    def test_parseAssertionsIntoAssertionList(self):
+    def test_parseNENAssertionsIntoAssertionList(self):
         audit = self.simpleTestAudit
         (NENList, NEBList) = parseAssertionsIntoAssertionList(audit, False, self.cands)
         assert NEBList == []
@@ -129,6 +129,44 @@ class TestIRVAssertionUtils:
         # Nevertheless, the way its implemented does produce the same order, and I can't
         # get a set-equality sort of operator to work.
         assert NENList == self.ExpectedNENList
+
+    simpleNEBTestAudit = {
+        'contest': '33',
+        'winner': '9',
+        'eliminated': ['3', '5'],
+        'Expected Polls (#)': '71',
+        'Expected Polls (%)': '1',
+        'assertions': [{
+                        "winner": "9",
+                        "loser": "5",
+                        "already_eliminated": "",
+                        "assertion_type": "WINNER_ONLY",
+                        "explanation": "Rules out case where 9 is eliminated before 5"
+                },
+                {
+                        "winner": "9",
+                        "loser": "3",
+                        "already_eliminated": "",
+                        "assertion_type": "WINNER_ONLY",
+                        "explanation": "Rules out case where 9 is eliminated before 3"
+                }
+        ]}
+
+    NEBTestCands = frozenset(simpleNEBTestAudit["eliminated"] + [simpleNEBTestAudit["winner"]])
+    ExpectedNEBList = [NEB('9', '5'), NEB('9', '3')]
+
+    def test_parseNEBAssertionsIntoAssertionList(self):
+        audit = self.simpleNEBTestAudit
+        (NENList, NEBList) = parseAssertionsIntoAssertionList(audit, False, self.NEBTestCands)
+
+        assert NEBList == self.ExpectedNEBList
+        assert NENList == []
+
+
+
+    def test_storeNEBAssertionsInArray(self):
+        NEBArray = storeNEBAssertionsInArray(self.ExpectedNEBList, self.NEBTestCands)
+        assert NEBArray == [[False, False, False], [False, False, False], [True, True, False]]
 
 ##########################################################################################
 if __name__ == "__main__":
