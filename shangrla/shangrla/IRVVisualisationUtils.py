@@ -9,6 +9,7 @@ from collections import namedtuple
 
 LeafNode = namedtuple('LeafNode', 'cand, NEBTagList, IRVTagList')
 
+
 # Convert a tree in list form into the same tree in tuple form suitable for
 # svgling.
 def treeListToTuple(t):
@@ -100,6 +101,7 @@ def parseAssertions(auditfile,candidatefile):
         apparentNonWinners=audit["eliminated"] 
         assertions = audit["assertions"]
 
+    # FIXME Are these printouts supposed to be inside the else? Otherwise don't we get them twice?
     apparentWinnerName = findCandidateName(apparentWinner,candidatefile)
     print("Apparent winner: "+"\n"+printTuple((apparentWinner,apparentWinnerName)))
     
